@@ -1,0 +1,475 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="5">
+    <PathDelim Value="\"/>
+    <Name Value="pascalscada"/>
+    <Type Value="RunAndDesignTime"/>
+    <Author Value="Fabio Luis Girardi &lt;fabio@pascalscada.com>"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <IncludeFiles Value="src\scada"/>
+        <OtherUnitFiles Value="src\scada"/>
+        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\scada"/>
+      </SearchPaths>
+      <Parsing>
+        <SyntaxOptions>
+          <UseAnsiStrings Value="False"/>
+        </SyntaxOptions>
+      </Parsing>
+      <CodeGeneration>
+        <SmartLinkUnit Value="True"/>
+      </CodeGeneration>
+      <Other>
+        <WriteFPCLogo Value="False"/>
+        <CompilerMessages>
+          <IgnoredMessages idx5057="True" idx5024="True"/>
+        </CompilerMessages>
+      </Other>
+    </CompilerOptions>
+    <Description Value="PascalSCADA main components"/>
+    <License Value="LGPL v2.1 with linking exception"/>
+    <Version Minor="7" Release="7"/>
+    <Files Count="104">
+      <Item1>
+        <Filename Value="src\scada\MelsecDriver.pas"/>
+        <UnitName Value="MelsecDriver"/>
+      </Item1>
+      <Item2>
+        <Filename Value="src\scada\MelsecTCP.pas"/>
+        <UnitName Value="MelsecTCP"/>
+      </Item2>
+      <Item3>
+        <Filename Value="src\scada\commport.pas"/>
+        <UnitName Value="CommPort"/>
+      </Item3>
+      <Item4>
+        <Filename Value="src\scada\commtypes.pas"/>
+        <UnitName Value="commtypes"/>
+      </Item4>
+      <Item5>
+        <Filename Value="src\scada\crc16utils.pas"/>
+        <UnitName Value="crc16utils"/>
+      </Item5>
+      <Item6>
+        <Filename Value="src\scada\iboxdriver.pas"/>
+        <UnitName Value="IBoxDriver"/>
+      </Item6>
+      <Item7>
+        <Filename Value="src\scada\isotcpdriver.pas"/>
+        <UnitName Value="ISOTCPDriver"/>
+      </Item7>
+      <Item8>
+        <Filename Value="src\scada\linearscaleprocessor.pas"/>
+        <UnitName Value="LinearScaleProcessor"/>
+      </Item8>
+      <Item9>
+        <Filename Value="src\scada\modbusdriver.pas"/>
+        <UnitName Value="ModBusDriver"/>
+      </Item9>
+      <Item10>
+        <Filename Value="src\scada\modbusserial.pas"/>
+        <UnitName Value="ModBusSerial"/>
+      </Item10>
+      <Item11>
+        <Filename Value="src\scada\modbustcp.pas"/>
+        <UnitName Value="ModBusTCP"/>
+      </Item11>
+      <Item12>
+        <Filename Value="src\scada\mutexclient.pas"/>
+        <UnitName Value="MutexClient"/>
+      </Item12>
+      <Item13>
+        <Filename Value="src\scada\mutexserver.pas"/>
+        <UnitName Value="mutexserver"/>
+      </Item13>
+      <Item14>
+        <Filename Value="src\scada\opcdaprotocol.pas"/>
+        <UnitName Value="OPCDAProtocol"/>
+      </Item14>
+      <Item15>
+        <Filename Value="src\scada\plcblock.pas"/>
+        <UnitName Value="PLCBlock"/>
+      </Item15>
+      <Item16>
+        <Filename Value="src\scada\plcblockelement.pas"/>
+        <UnitName Value="PLCBlockElement"/>
+      </Item16>
+      <Item17>
+        <Filename Value="src\scada\plcmemorymanager.pas"/>
+        <UnitName Value="PLCMemoryManager"/>
+      </Item17>
+      <Item18>
+        <Filename Value="src\scada\plcnumber.pas"/>
+        <UnitName Value="PLCNumber"/>
+      </Item18>
+      <Item19>
+        <Filename Value="src\scada\plcstring.pas"/>
+        <UnitName Value="PLCString"/>
+      </Item19>
+      <Item20>
+        <Filename Value="src\scada\plcstruct.pas"/>
+        <UnitName Value="PLCStruct"/>
+      </Item20>
+      <Item21>
+        <Filename Value="src\scada\plcstructelement.pas"/>
+        <UnitName Value="PLCStructElement"/>
+      </Item21>
+      <Item22>
+        <Filename Value="src\scada\plctag.pas"/>
+        <UnitName Value="PLCTag"/>
+      </Item22>
+      <Item23>
+        <Filename Value="src\scada\plctagnumber.pas"/>
+        <UnitName Value="PLCTagNumber"/>
+      </Item23>
+      <Item24>
+        <Filename Value="src\scada\protocoldriver.pas"/>
+        <UnitName Value="ProtocolDriver"/>
+      </Item24>
+      <Item25>
+        <Filename Value="src\scada\protocoltypes.pas"/>
+        <UnitName Value="ProtocolTypes"/>
+      </Item25>
+      <Item26>
+        <Filename Value="src\scada\protscan.pas"/>
+        <UnitName Value="protscan"/>
+      </Item26>
+      <Item27>
+        <Filename Value="src\scada\protscanupdate.pas"/>
+        <UnitName Value="protscanupdate"/>
+      </Item27>
+      <Item28>
+        <Filename Value="src\scada\s7family.pas"/>
+        <UnitName Value="s7family"/>
+      </Item28>
+      <Item29>
+        <Filename Value="src\scada\s7scanreq.pas"/>
+        <UnitName Value="s7scanreq"/>
+      </Item29>
+      <Item30>
+        <Filename Value="src\scada\s7types.pas"/>
+        <UnitName Value="S7Types"/>
+      </Item30>
+      <Item31>
+        <Filename Value="src\scada\serialport.pas"/>
+        <UnitName Value="SerialPort"/>
+      </Item31>
+      <Item32>
+        <Filename Value="src\scada\tag.pas"/>
+        <UnitName Value="Tag"/>
+      </Item32>
+      <Item33>
+        <Filename Value="src\scada\tagbit.pas"/>
+        <UnitName Value="TagBit"/>
+      </Item33>
+      <Item34>
+        <Filename Value="src\scada\tagblock.pas"/>
+        <UnitName Value="TagBlock"/>
+      </Item34>
+      <Item35>
+        <Filename Value="src\scada\tagcollection.pas"/>
+        <UnitName Value="tagcollection"/>
+      </Item35>
+      <Item36>
+        <Filename Value="src\scada\tcp_udpport.pas"/>
+        <UnitName Value="tcp_udpport"/>
+      </Item36>
+      <Item37>
+        <Filename Value="src\scada\userscale.pas"/>
+        <UnitName Value="UserScale"/>
+      </Item37>
+      <Item38>
+        <Filename Value="src\scada\valueprocessor.pas"/>
+        <UnitName Value="ValueProcessor"/>
+      </Item38>
+      <Item39>
+        <Filename Value="src\scada\westasciidriver.pas"/>
+        <UnitName Value="WestASCIIDriver"/>
+      </Item39>
+      <Item40>
+        <Filename Value="src\scada\numexprtag.pas"/>
+        <UnitName Value="numexprtag"/>
+      </Item40>
+      <Item41>
+        <Filename Value="src\scada\plcstructstring.pas"/>
+        <UnitName Value="plcstructstring"/>
+      </Item41>
+      <Item42>
+        <Filename Value="src\scada\socketserver.pas"/>
+        <UnitName Value="socketserver"/>
+      </Item42>
+      <Item43>
+        <Filename Value="src\scada\s7plustypes.pas"/>
+        <UnitName Value="S7PlusTypes"/>
+      </Item43>
+      <Item44>
+        <Filename Value="src\scada\s7plusvlq.pas"/>
+        <UnitName Value="S7PlusVLQ"/>
+      </Item44>
+      <Item45>
+        <Filename Value="src\scada\s7pluscodec.pas"/>
+        <UnitName Value="S7PlusCodec"/>
+      </Item45>
+      <Item46>
+        <Filename Value="src\scada\s7plusconnection.pas"/>
+        <UnitName Value="S7PlusConnection"/>
+      </Item46>
+      <Item47>
+        <Filename Value="src\scada\s7plusfamily.pas"/>
+        <UnitName Value="S7PlusFamily"/>
+      </Item47>
+      <Item48>
+        <Filename Value="src\scada\s7plusssl.pas"/>
+        <UnitName Value="S7PlusSSL"/>
+      </Item48>
+      <Item49>
+        <Filename Value="src\scada\s7plustypeinfo.pas"/>
+        <UnitName Value="S7PlusTypeInfo"/>
+      </Item49>
+      <Item50>
+        <Filename Value="src\scada\lgxdriver.pas"/>
+        <UnitName Value="LGXDriver"/>
+      </Item50>
+      <Item51>
+        <Filename Value="src\scada\s7plusharpoaesctr.pas"/>
+        <UnitName Value="S7PlusHarpoAesCtr"/>
+      </Item51>
+      <Item52>
+        <Filename Value="src\scada\s7plusharpoauth.pas"/>
+        <UnitName Value="S7PlusHarpoAuth"/>
+      </Item52>
+      <Item53>
+        <Filename Value="src\scada\s7plusharpoauthenticator.pas"/>
+        <UnitName Value="S7PlusHarpoAuthenticator"/>
+      </Item53>
+      <Item54>
+        <Filename Value="src\scada\s7plusharpobigint.pas"/>
+        <UnitName Value="S7PlusHarpoBigInt"/>
+      </Item54>
+      <Item55>
+        <Filename Value="src\scada\s7plusharpobigintx.pas"/>
+        <UnitName Value="S7PlusHarpoBigIntX"/>
+      </Item55>
+      <Item56>
+        <Filename Value="src\scada\s7plusharpoblobmeta.pas"/>
+        <UnitName Value="S7PlusHarpoBlobMeta"/>
+      </Item56>
+      <Item57>
+        <Filename Value="src\scada\s7plusharpofamily0data.pas"/>
+        <UnitName Value="S7PlusHarpoFamily0Data"/>
+      </Item57>
+      <Item58>
+        <Filename Value="src\scada\s7plusharpofamily0transforms.pas"/>
+        <UnitName Value="S7PlusHarpoFamily0Transforms"/>
+      </Item58>
+      <Item59>
+        <Filename Value="src\scada\s7plusharpofingerprint.pas"/>
+        <UnitName Value="S7PlusHarpoFingerprint"/>
+      </Item59>
+      <Item60>
+        <Filename Value="src\scada\s7plusharpohash.pas"/>
+        <UnitName Value="S7PlusHarpoHash"/>
+      </Item60>
+      <Item61>
+        <Filename Value="src\scada\s7plusharpokeyderiv.pas"/>
+        <UnitName Value="S7PlusHarpoKeyDeriv"/>
+      </Item61>
+      <Item62>
+        <Filename Value="src\scada\s7plusharpokeys.pas"/>
+        <UnitName Value="S7PlusHarpoKeys"/>
+      </Item62>
+      <Item63>
+        <Filename Value="src\scada\s7plusharpolegacyauth.pas"/>
+        <UnitName Value="S7PlusHarpoLegacyAuth"/>
+      </Item63>
+      <Item64>
+        <Filename Value="src\scada\s7plusharpolutgen.pas"/>
+        <UnitName Value="S7PlusHarpoLutGen"/>
+      </Item64>
+      <Item65>
+        <Filename Value="src\scada\s7plusharpomonolith1.pas"/>
+        <UnitName Value="S7PlusHarpoMonolith1"/>
+      </Item65>
+      <Item66>
+        <Filename Value="src\scada\s7plusharpomonolith10.pas"/>
+        <UnitName Value="S7PlusHarpoMonolith10"/>
+      </Item66>
+      <Item67>
+        <Filename Value="src\scada\s7plusharpomonolith11.pas"/>
+        <UnitName Value="S7PlusHarpoMonolith11"/>
+      </Item67>
+      <Item68>
+        <Filename Value="src\scada\s7plusharpomonolith2.pas"/>
+        <UnitName Value="S7PlusHarpoMonolith2"/>
+      </Item68>
+      <Item69>
+        <Filename Value="src\scada\s7plusharpomonolith3.pas"/>
+        <UnitName Value="S7PlusHarpoMonolith3"/>
+      </Item69>
+      <Item70>
+        <Filename Value="src\scada\s7plusharpomonolith4.pas"/>
+        <UnitName Value="S7PlusHarpoMonolith4"/>
+      </Item70>
+      <Item71>
+        <Filename Value="src\scada\s7plusharpomonolith5.pas"/>
+        <UnitName Value="S7PlusHarpoMonolith5"/>
+      </Item71>
+      <Item72>
+        <Filename Value="src\scada\s7plusharpomonolith6.pas"/>
+        <UnitName Value="S7PlusHarpoMonolith6"/>
+      </Item72>
+      <Item73>
+        <Filename Value="src\scada\s7plusharpomonolith7.pas"/>
+        <UnitName Value="S7PlusHarpoMonolith7"/>
+      </Item73>
+      <Item74>
+        <Filename Value="src\scada\s7plusharpomonolith8.pas"/>
+        <UnitName Value="S7PlusHarpoMonolith8"/>
+      </Item74>
+      <Item75>
+        <Filename Value="src\scada\s7plusharpomonolith9.pas"/>
+        <UnitName Value="S7PlusHarpoMonolith9"/>
+      </Item75>
+      <Item76>
+        <Filename Value="src\scada\s7plusharpomonolithwrappers.pas"/>
+        <UnitName Value="S7PlusHarpoMonolithWrappers"/>
+      </Item76>
+      <Item77>
+        <Filename Value="src\scada\s7plusharponinepart1.pas"/>
+        <UnitName Value="S7PlusHarpoNinePart1"/>
+      </Item77>
+      <Item78>
+        <Filename Value="src\scada\s7plusharponinepart10.pas"/>
+        <UnitName Value="S7PlusHarpoNinePart10"/>
+      </Item78>
+      <Item79>
+        <Filename Value="src\scada\s7plusharponinepart11.pas"/>
+        <UnitName Value="S7PlusHarpoNinePart11"/>
+      </Item79>
+      <Item80>
+        <Filename Value="src\scada\s7plusharponinepart2.pas"/>
+        <UnitName Value="S7PlusHarpoNinePart2"/>
+      </Item80>
+      <Item81>
+        <Filename Value="src\scada\s7plusharponinepart3.pas"/>
+        <UnitName Value="S7PlusHarpoNinePart3"/>
+      </Item81>
+      <Item82>
+        <Filename Value="src\scada\s7plusharponinepart4.pas"/>
+        <UnitName Value="S7PlusHarpoNinePart4"/>
+      </Item82>
+      <Item83>
+        <Filename Value="src\scada\s7plusharponinepart5.pas"/>
+        <UnitName Value="S7PlusHarpoNinePart5"/>
+      </Item83>
+      <Item84>
+        <Filename Value="src\scada\s7plusharponinepart6.pas"/>
+        <UnitName Value="S7PlusHarpoNinePart6"/>
+      </Item84>
+      <Item85>
+        <Filename Value="src\scada\s7plusharponinepart7.pas"/>
+        <UnitName Value="S7PlusHarpoNinePart7"/>
+      </Item85>
+      <Item86>
+        <Filename Value="src\scada\s7plusharponinepart8.pas"/>
+        <UnitName Value="S7PlusHarpoNinePart8"/>
+      </Item86>
+      <Item87>
+        <Filename Value="src\scada\s7plusharponinepart9.pas"/>
+        <UnitName Value="S7PlusHarpoNinePart9"/>
+      </Item87>
+      <Item88>
+        <Filename Value="src\scada\s7plusharporandom.pas"/>
+        <UnitName Value="S7PlusHarpoRandom"/>
+      </Item88>
+      <Item89>
+        <Filename Value="src\scada\s7plusharposeedtransform.pas"/>
+        <UnitName Value="S7PlusHarpoSeedTransform"/>
+      </Item89>
+      <Item90>
+        <Filename Value="src\scada\s7plusharpotenpart1.pas"/>
+        <UnitName Value="S7PlusHarpoTenPart1"/>
+      </Item90>
+      <Item91>
+        <Filename Value="src\scada\s7plusharpotenpart2.pas"/>
+        <UnitName Value="S7PlusHarpoTenPart2"/>
+      </Item91>
+      <Item92>
+        <Filename Value="src\scada\s7plusharpotenpart3.pas"/>
+        <UnitName Value="S7PlusHarpoTenPart3"/>
+      </Item92>
+      <Item93>
+        <Filename Value="src\scada\s7plusharpotransform12.pas"/>
+        <UnitName Value="S7PlusHarpoTransform12"/>
+      </Item93>
+      <Item94>
+        <Filename Value="src\scada\s7plusharpotransform7.pas"/>
+        <UnitName Value="S7PlusHarpoTransform7"/>
+      </Item94>
+      <Item95>
+        <Filename Value="src\scada\s7plusharpoutil.pas"/>
+        <UnitName Value="S7PlusHarpoUtil"/>
+      </Item95>
+      <Item96>
+        <Filename Value="src\scada\s7plusharpolegitimate.pas"/>
+        <UnitName Value="S7PlusHarpoLegitimate"/>
+      </Item96>
+      <Item97>
+        <Filename Value="src\scada\XinJEDriver.pas"/>
+        <UnitName Value="XinJEDriver"/>
+      </Item97>
+      <Item98>
+        <Filename Value="src\scada\XinJETCP.pas"/>
+        <UnitName Value="XinJETCP"/>
+      </Item98>
+      <Item99>
+        <Filename Value="src\scada\DeltaDriver.pas"/>
+        <UnitName Value="DeltaDriver"/>
+      </Item99>
+      <Item100>
+        <Filename Value="src\scada\DeltaTCP.pas"/>
+        <UnitName Value="DeltaTCP"/>
+      </Item100>
+      <Item101>
+        <Filename Value="src\scada\InovanceDriver.pas"/>
+        <UnitName Value="InovanceDriver"/>
+      </Item101>
+      <Item102>
+        <Filename Value="src\scada\InovanceTCP.pas"/>
+        <UnitName Value="InovanceTCP"/>
+      </Item102>
+      <Item103>
+        <Filename Value="src\scada\H5UTagDriver.pas"/>
+        <UnitName Value="H5UTagDriver"/>
+      </Item103>
+      <Item104>
+        <Filename Value="src\scada\H5UTagTCP.pas"/>
+        <UnitName Value="H5UTagTCP"/>
+      </Item104>
+    </Files>
+    <CompatibilityMode Value="True"/>
+    <RequiredPkgs Count="2">
+      <Item1>
+        <PackageName Value="LCLBase"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="pascalscada_common"/>
+        <MaxVersion Minor="7" Release="6"/>
+        <MinVersion Minor="7" Release="7" Valid="True"/>
+        <DefaultFilename Value="pascalscada_common.lpk" Prefer="True"/>
+      </Item2>
+    </RequiredPkgs>
+    <UsageOptions>
+      <CustomOptions Value="-dUseCThreads"/>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+    <CustomOptions Items="ExternHelp" Version="2">
+      <_ExternHelp Items="Count"/>
+    </CustomOptions>
+  </Package>
+</CONFIG>

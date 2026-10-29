@@ -1,0 +1,397 @@
+{$i ../src/common/language.inc}
+{$IFDEF PORTUGUES}
+{:
+  @abstract(Testes do THMILabel: o valor de um tag virando texto na tela.)
+  @author(Fabio Luis Girardi <fabio@pascalscada.com>)
+
+  E' o controle mais usado de uma tela de supervisorio e o unico que so le:
+  pega o valor do tag, passa pelo formato, pelo prefixo e pelo sufixo, e
+  entrega uma legenda. Nao tem caminho de escrita, nao tem clique - o que se
+  testa e' a legenda que sai, e ela e' legivel de fora.
+
+  A formatacao em si e' do tag; o que o rotulo acrescenta e' quando refazer a
+  legenda, o que mostrar quando nao ha tag, e o controle de acesso.
+}
+{$ELSE}
+{:
+  @abstract(THMILabel tests: a tag's value turning into text on screen.)
+  @author(Fabio Luis Girardi <fabio@pascalscada.com>)
+
+  It is the most used control on a supervisory screen and the only one that
+  merely reads: it takes the tag's value, runs it through the format, the
+  prefix and the suffix, and hands over a caption. No write path, no click -
+  what is tested is the caption that comes out, and it is readable from
+  outside.
+
+  The formatting itself belongs to the tag; what the label adds is when to
+  rebuild the caption, what to show with no tag, and access control.
+}
+{$ENDIF}
+unit ut.hmilabel;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils, Forms, Controls, fpcunit, testregistry,
+  HMILabel, PLCTag, ControlSecurityManager, CustomizedUserManagement,
+  testsupport.faketag;
+
+type
+
+  { TTestHMILabel }
+
+  TTestHMILabel = class(TTestCase)
+  private
+    FLabel:THMILabel;
+    FTag:TFakeNumber;
+    procedure TagValueIs(v:Double);
+  protected
+    procedure SetUp; override;
+    procedure TearDown; override;
+  published
+    //criado por codigo / created by code
+    procedure EnablingARuntimeCreatedControlKeepsItEnabled;
+    //a legenda / the caption
+    procedure WithNoTagTheCaptionIsEmpty;
+    procedure TheCaptionShowsTheTagValue;
+    procedure TheCaptionFollowsTheTagValue;
+    procedure ThePrefixComesBeforeTheValue;
+    procedure TheSuffixComesAfterTheValue;
+    procedure WithNoFormatTheValueComesWithOneDecimal;
+    procedure TheNumberFormatShapesTheValue;
+    procedure PrefixFormatAndSuffixComeTogether;
+
+    //quando a legenda e refeita / when the caption is rebuilt
+    procedure ChangingThePrefixRebuildsTheCaptionAtOnce;
+    procedure ChangingTheFormatRebuildsTheCaptionAtOnce;
+
+    //o tag / the tag
+    procedure ATagThatIsNotReadableIsRefused;
+    procedure ChangingTagsFollowsTheNewOne;
+    procedure ADestroyedTagLetsGoOfTheLabel;
+    procedure ClearingTheTagEmptiesTheCaption;
+    procedure ADestroyedTagEmptiesTheCaption;
+
+    //seguranca / security
+    procedure ANewLabelIsEnabled;
+    procedure WithoutPermissionTheLabelIsDisabled;
+    procedure TheEnabledPropertyAnswersForTheProgramNotForTheControl;
+
+    //o encerramento do app / app shutdown
+    procedure AQueuedRefreshDoesNothingDuringAppShutdown;
+  end;
+
+implementation
+
+uses HMITypes;
+
+type
+
+  { TLabelAccess }
+
+  //: eleva SimulateAppShutdown (protected) a public, pro teste conseguir
+  //: setar / raises SimulateAppShutdown (protected) to public, so the test
+  //: can set it
+  TLabelAccess = class(THMILabel)
+  public
+    property SimulateAppShutdown;
+  end;
+
+  { TUserManagementForTest }
+
+  TUserManagementForTest = class(TCustomizedUserManagement)
+  private
+    FGranted:UTF8String;
+  protected
+    function CanAccess(sc:UTF8String):Boolean; override;
+  public
+    property Granted:UTF8String read FGranted write FGranted;
+  end;
+
+function TUserManagementForTest.CanAccess(sc:UTF8String):Boolean;
+begin
+  Result:=(Trim(sc)='') or (sc=FGranted);
+end;
+
+{ TTestHMILabel }
+
+procedure TTestHMILabel.SetUp;
+begin
+  FLabel:=THMILabel.Create(nil);
+  FTag:=TFakeNumber.Create(nil);
+end;
+
+procedure TTestHMILabel.TearDown;
+begin
+  FreeAndNil(FLabel);
+  FreeAndNil(FTag);
+end;
+
+procedure TTestHMILabel.TagValueIs(v:Double);
+begin
+  FTag.ChegouDoCLP(v);
+  //o aviso do tag agenda a atualizacao na fila da aplicacao
+  Application.ProcessMessages;
+end;
+
+procedure TTestHMILabel.EnablingARuntimeCreatedControlKeepsItEnabled;
+begin
+  //sem .lfm e sem codigo de seguranca: desabilitar e reabilitar tem que
+  //deixa-lo habilitado. A flag de seguranca nascia falsa, e o E logico
+  //com ela desabilitava o controle no primeiro Enabled:=true.
+  //with no .lfm and no security code: disabling and re-enabling has to
+  //leave it enabled. The security flag was born false, and the logical
+  //AND with it disabled the control on the first Enabled:=true.
+  FLabel.Enabled:=false;
+
+  FLabel.Enabled:=true;
+
+  AssertTrue('habilitado', TControl(FLabel).Enabled);
+end;
+
+procedure TTestHMILabel.WithNoTagTheCaptionIsEmpty;
+begin
+  //em tempo de execucao um rotulo sem tag nao inventa texto
+  AssertEquals('legenda vazia', '', FLabel.Caption);
+end;
+
+procedure TTestHMILabel.TheCaptionShowsTheTagValue;
+begin
+  FLabel.PLCTag:=FTag;
+
+  TagValueIs(42);
+
+  AssertEquals('valor na legenda', '42.0', FLabel.Caption);
+end;
+
+procedure TTestHMILabel.TheCaptionFollowsTheTagValue;
+begin
+  FLabel.PLCTag:=FTag;
+
+  TagValueIs(10);
+  AssertEquals('primeiro valor', '10.0', FLabel.Caption);
+
+  TagValueIs(20);
+  AssertEquals('segundo valor',  '20.0', FLabel.Caption);
+end;
+
+procedure TTestHMILabel.ThePrefixComesBeforeTheValue;
+begin
+  FLabel.PLCTag:=FTag;
+  FLabel.Prefix:='nivel: ';
+
+  TagValueIs(42);
+
+  AssertEquals('prefixo antes', 'nivel: 42.0', FLabel.Caption);
+end;
+
+procedure TTestHMILabel.TheSuffixComesAfterTheValue;
+begin
+  FLabel.PLCTag:=FTag;
+  FLabel.Sufix:=' m';
+
+  TagValueIs(42);
+
+  AssertEquals('sufixo depois', '42.0 m', FLabel.Caption);
+end;
+
+procedure TTestHMILabel.WithNoFormatTheValueComesWithOneDecimal;
+begin
+  //quem nao escolhe formato recebe uma casa decimal, nao o inteiro cru
+  FLabel.PLCTag:=FTag;
+
+  TagValueIs(42);
+
+  AssertEquals('uma casa decimal', '42.0', FLabel.Caption);
+end;
+
+procedure TTestHMILabel.TheNumberFormatShapesTheValue;
+begin
+  FLabel.PLCTag:=FTag;
+  FLabel.NumberFormat:='0.00';
+
+  TagValueIs(42.5);
+
+  AssertEquals('duas casas', '42.50', FLabel.Caption);
+end;
+
+procedure TTestHMILabel.PrefixFormatAndSuffixComeTogether;
+begin
+  FLabel.PLCTag:=FTag;
+  FLabel.Prefix:='nivel: ';
+  FLabel.NumberFormat:='0.0';
+  FLabel.Sufix:=' m';
+
+  TagValueIs(3.75);
+
+  AssertEquals('tudo junto', 'nivel: 3.8 m', FLabel.Caption);
+end;
+
+procedure TTestHMILabel.ChangingThePrefixRebuildsTheCaptionAtOnce;
+begin
+  //mexer no prefixo nao pode esperar a proxima varredura para aparecer
+  FLabel.PLCTag:=FTag;
+  TagValueIs(42);
+
+  FLabel.Prefix:='nivel: ';
+
+  AssertEquals('legenda refeita na hora', 'nivel: 42.0', FLabel.Caption);
+end;
+
+procedure TTestHMILabel.ChangingTheFormatRebuildsTheCaptionAtOnce;
+begin
+  FLabel.PLCTag:=FTag;
+  TagValueIs(42);
+
+  FLabel.NumberFormat:='0.00';
+
+  AssertEquals('legenda refeita na hora', '42.00', FLabel.Caption);
+end;
+
+procedure TTestHMILabel.ATagThatIsNotReadableIsRefused;
+var
+  semLeitura:TComponent;
+begin
+  //o rotulo precisa de algo que saiba se descrever em texto
+  semLeitura:=TComponent.Create(nil);
+  try
+    try
+      FLabel.PLCTag:=TPLCTag(semLeitura);
+      Fail('um componente que nao e tag tem que ser recusado');
+    except
+      on EAssertionFailedError do raise;
+      on Exception do ;
+    end;
+  finally
+    semLeitura.Free;
+  end;
+end;
+
+procedure TTestHMILabel.ChangingTagsFollowsTheNewOne;
+var
+  outro:TFakeNumber;
+begin
+  outro:=TFakeNumber.Create(nil);
+  try
+    FLabel.PLCTag:=FTag;
+    TagValueIs(10);
+
+    FLabel.PLCTag:=outro;
+    outro.ChegouDoCLP(99);
+    Application.ProcessMessages;
+    AssertEquals('segue o tag novo', '99.0', FLabel.Caption);
+
+    TagValueIs(11);
+    AssertEquals('e o antigo nao mexe mais', '99.0', FLabel.Caption);
+  finally
+    FLabel.PLCTag:=nil;
+    outro.Free;
+  end;
+end;
+
+procedure TTestHMILabel.ClearingTheTagEmptiesTheCaption;
+begin
+  //sem tag nao ha' leitura: deixar o ultimo valor na tela e' pior do que nao
+  //mostrar nada, porque continua parecendo leitura viva
+  //with no tag there is no reading: leaving the last value on screen is worse
+  //than showing nothing, because it still reads like a live value
+  FLabel.PLCTag:=FTag;
+  TagValueIs(42);
+  AssertEquals('mostrando o valor', '42.0', FLabel.Caption);
+
+  FLabel.PLCTag:=nil;
+
+  AssertEquals('sem tag, sem valor', '', FLabel.Caption);
+end;
+
+procedure TTestHMILabel.ADestroyedTagEmptiesTheCaption;
+begin
+  FLabel.PLCTag:=FTag;
+  TagValueIs(42);
+
+  FreeAndNil(FTag);
+
+  AssertEquals('sem tag, sem valor', '', FLabel.Caption);
+end;
+
+procedure TTestHMILabel.ADestroyedTagLetsGoOfTheLabel;
+begin
+  FLabel.PLCTag:=FTag;
+
+  FreeAndNil(FTag);
+
+  AssertTrue('o rotulo largou o tag', FLabel.PLCTag=nil);
+end;
+
+procedure TTestHMILabel.ANewLabelIsEnabled;
+begin
+  AssertTrue('sem codigo de seguranca, habilitado', TControl(FLabel).Enabled);
+end;
+
+procedure TTestHMILabel.WithoutPermissionTheLabelIsDisabled;
+var
+  users:TUserManagementForTest;
+begin
+  users:=TUserManagementForTest.Create(nil);
+  try
+    users.Granted:='ver_producao';
+
+    FLabel.SecurityCode:='ver_receita';
+
+    AssertFalse('sem permissao, desabilitado', TControl(FLabel).Enabled);
+  finally
+    users.Free;
+  end;
+end;
+
+procedure TTestHMILabel.TheEnabledPropertyAnswersForTheProgramNotForTheControl;
+var
+  users:TUserManagementForTest;
+begin
+  //e assim que a seguranca sobre controles e' implementada: o THMILabel
+  //redeclara Enabled guardando o que o PROGRAMA pediu, e o estado que chega
+  //ao controle e' o E logico disso com a permissao do usuario. Por isso as
+  //duas leituras respondem coisas diferentes, e e' a do ancestral que diz se
+  //o controle esta usavel
+  users:=TUserManagementForTest.Create(nil);
+  try
+    users.Granted:='ver_producao';
+    FLabel.SecurityCode:='ver_receita';
+
+    AssertTrue('a propriedade diz o que o programa pediu', FLabel.Enabled);
+    AssertFalse('mas o controle esta desabilitado',        TControl(FLabel).Enabled);
+  finally
+    users.Free;
+  end;
+end;
+
+procedure TTestHMILabel.AQueuedRefreshDoesNothingDuringAppShutdown;
+begin
+  //ver THMIAnimation.RefreshAnimation (hmianimation.pas) e o teste
+  //AQueuedRefreshDoesNothingDuringAppShutdown em ut.hmianimation.pas para o
+  //porque deste guard.
+  //see THMIAnimation.RefreshAnimation (hmianimation.pas) and the
+  //AQueuedRefreshDoesNothingDuringAppShutdown test in ut.hmianimation.pas
+  //for why this guard exists.
+  FLabel.PLCTag:=FTag;
+  TagValueIs(42);
+  AssertEquals('legenda antes do encerramento', '42.0', FLabel.Caption);
+
+  FTag.ChegouDoCLP(99);
+
+  TLabelAccess(FLabel).SimulateAppShutdown:=true;
+  try
+    FLabel.RefreshLabel(0);
+  finally
+    TLabelAccess(FLabel).SimulateAppShutdown:=false;
+  end;
+
+  AssertEquals('a legenda nao mudou', '42.0', FLabel.Caption);
+end;
+
+initialization
+  RegisterTest(TTestHMILabel);
+
+end.

@@ -1,0 +1,65 @@
+unit ut.hsutils;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils, fpcunit, testregistry,
+  hsutils;
+
+type
+
+  { TTestHsUtils }
+
+  TTestHsUtils = class(TTestCase)
+  published
+    procedure ExplodeSplitsEveryField;
+    procedure ExplodeHonoursTheLimit;
+    procedure ExplodeWithNoDelimiterReturnsTheWholeString;
+    procedure IntegerPower;
+  end;
+
+implementation
+
+procedure TTestHsUtils.ExplodeSplitsEveryField;
+var
+  r: TStringArray;
+begin
+  r := ExplodeString('.', '192.168.0.1');
+  AssertEquals('number of fields', 4, Length(r));
+  AssertEquals('192', r[0]);
+  AssertEquals('1', r[3]);
+end;
+
+procedure TTestHsUtils.ExplodeHonoursTheLimit;
+var
+  r: TStringArray;
+begin
+  r := ExplodeString('/', 'a/b/c/d', 2);
+  AssertEquals('number of fields', 2, Length(r));
+  AssertEquals('a', r[0]);
+  AssertEquals('b/c/d', r[1]);
+end;
+
+procedure TTestHsUtils.ExplodeWithNoDelimiterReturnsTheWholeString;
+var
+  r: TStringArray;
+begin
+  r := ExplodeString('', 'texto');
+  AssertEquals(1, Length(r));
+  AssertEquals('texto', r[0]);
+end;
+
+procedure TTestHsUtils.IntegerPower;
+begin
+  AssertEquals('2^0',  1, Power(2, 0));
+  AssertEquals('2^8',  256, Power(2, 8));
+  AssertEquals('2^16', 65536, Power(2, 16));
+  AssertEquals('10^3', 1000, Power(10, 3));
+end;
+
+initialization
+  RegisterTest(TTestHsUtils);
+
+end.

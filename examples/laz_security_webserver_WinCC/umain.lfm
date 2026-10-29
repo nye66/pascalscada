@@ -1,0 +1,49 @@
+object Form1: TForm1
+  Left = 199
+  Height = 309
+  Top = 250
+  Width = 965
+  Caption = 'Form1'
+  ClientHeight = 309
+  ClientWidth = 965
+  FormStyle = fsSystemStayOnTop
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  object Memo1: TMemo
+    Left = 0
+    Height = 309
+    Top = 0
+    Width = 965
+    Align = alClient
+    Font.CharSet = ANSI_CHARSET
+    Font.Name = 'Consolas'
+    Font.Pitch = fpFixed
+    Font.Quality = fqDraft
+    ParentFont = False
+    ReadOnly = True
+    TabOrder = 0
+    WordWrap = False
+  end
+  object WinCCUserManagement1: TWinCCUserManagement
+    LoginRetries = 0
+    LoginFrozenTime = 0
+    Left = 64
+    Top = 16
+  end
+  object EventLog1: TEventLog
+    AppendContent = False
+    LogType = ltSystem
+    Active = False
+    RaiseExceptionOnError = False
+    DefaultEventType = etCustom
+    CustomLogType = 0
+    EventIDOffset = 0
+    Paused = False
+    Left = 312
+    Top = 16
+  end
+  object Timer1: TTimer
+    Left = 121
+    Top = 107
+  end
+end

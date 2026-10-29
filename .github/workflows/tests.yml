@@ -1,0 +1,404 @@
+name: tests
+
+on:
+  push:
+    branches: [master]
+    paths-ignore: ["docs/**", "artwork/**", "**.md"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ---------------------------------------------------------------
+  # Windows 64, Windows 32 and Linux 64: GitHub's own native runners.
+  # Builds the whole tree (HMI included) and runs the suite.
+  # ---------------------------------------------------------------
+  desktop:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: win64
+            os: windows-latest
+            widgetset: win32
+            laz-url: "https://sourceforge.net/projects/lazarus/files/Lazarus Windows 64 bits/Lazarus 4.2/lazarus-4.2-fpc-3.2.2-win64.exe"
+
+          - name: win32
+            os: windows-latest
+            widgetset: win32
+            laz-url: "https://sourceforge.net/projects/lazarus/files/Lazarus Windows 32 bits/Lazarus 4.2/lazarus-4.2-fpc-3.2.2-win32.exe"
+
+          - name: linux64
+            os: ubuntu-latest
+            widgetset: gtk2
+            laz-url: "https://sourceforge.net/projects/lazarus/files/Lazarus Linux amd64 DEB/Lazarus 4.2/lazarus-project_4.2.0-0_amd64.deb"
+            fpc-url: |
+              https://sourceforge.net/projects/lazarus/files/Lazarus Linux amd64 DEB/Lazarus 4.2/fpc-laz_3.2.2-210709_amd64.deb
+              https://sourceforge.net/projects/lazarus/files/Lazarus Linux amd64 DEB/Lazarus 4.2/fpc-src_3.2.2-210709_amd64.deb
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Development libraries (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libgtk2.0-dev xvfb
+
+      - name: Install Lazarus / FPC
+        uses: ollydev/setup-lazarus@v4
+        with:
+          laz-url: ${{ matrix.laz-url }}
+          fpc-url: ${{ matrix.fpc-url }}
+
+      - name: BGRABitmap (pascalscada_hmi dependency)
+        run: |
+          git clone --depth 1 https://github.com/bgrabitmap/bgrabitmap.git ../bgrabitmap
+          lazbuild --add-package-link ../bgrabitmap/bgrabitmap/bgrabitmappack.lpk
+
+      - name: Register the PascalSCADA packages
+        run: |
+          for pkg in pascalscada_common.lpk \
+                     pascalscada.lpk \
+                     pascalscada_db.lpk \
+                     pascalscada_dsng.lpk \
+                     pascalscada_hmi.lpk \
+                     pascalscada_full.lpk; do
+            lazbuild --add-package-link "$pkg"
+          done
+
+      - name: Build the core (common + scada + db)
+        run: |
+          lazbuild --build-all --widgetset=${{ matrix.widgetset }} pascalscada_common.lpk
+          lazbuild --build-all --widgetset=${{ matrix.widgetset }} pascalscada.lpk
+          lazbuild --build-all --widgetset=${{ matrix.widgetset }} pascalscada_db.lpk
+
+      - name: Build the graphical part (dsng + hmi + full)
+        run: lazbuild --build-all --widgetset=${{ matrix.widgetset }} pascalscada_full.lpk
+
+      - name: Build the test suite
+        # nogui: the runner is a console, no graphical widgetset needed
+        run: lazbuild --build-all --widgetset=nogui tests/pascalscada_tests.lpi
+
+      - name: Run the tests
+        run: |
+          BIN=tests/bin/pascalscada_tests
+          [ -f "$BIN.exe" ] && BIN="$BIN.exe"
+          "$BIN" --all --format=plain
+          "$BIN" --all --format=xml --file="tests/results-${{ matrix.name }}.xml"
+
+      - name: Build the HMI test suite
+        # A separate binary: it pulls BGRABitmap in, which only this job has.
+        # The 32 bit, ARM and FreeBSD jobs keep to pascalscada_tests.
+        #
+        # Built with a real widgetset, not nogui: seven HMI units create an
+        # LCL TTimer, and nogui has none - creating one raises "No timers
+        # available" before the test can even reach its first assertion.
+        run: lazbuild --build-all --widgetset=${{ matrix.widgetset }} tests/pascalscada_hmi_tests.lpi
+
+      - name: Run the HMI tests
+        # gtk2 needs a display for its timers, so Linux runs under Xvfb.
+        # The win32 widgetset has timers of its own and needs nothing.
+        run: |
+          BIN=tests/bin/pascalscada_hmi_tests
+          RUN=""
+          if [ -f "$BIN.exe" ]; then BIN="$BIN.exe"; else RUN="xvfb-run -a"; fi
+          $RUN "$BIN" --all --format=plain
+          $RUN "$BIN" --all --format=xml --file="tests/results-hmi-${{ matrix.name }}.xml"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results-${{ matrix.name }}
+          path: tests/results-*.xml
+
+  # ---------------------------------------------------------------
+  # Examples: builds every project under examples/ against the library
+  # just built. It runs none of them - nearly all are GUI applications
+  # that open a window and sit there waiting. What this job catches is
+  # the example left behind when the library renamed a class, moved a
+  # unit to another package or changed a signature.
+  # ---------------------------------------------------------------
+  examples:
+    name: examples-${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux64
+            os: ubuntu-latest
+            widgetset: gtk2
+            targetos: linux
+            laz-url: "https://sourceforge.net/projects/lazarus/files/Lazarus Linux amd64 DEB/Lazarus 4.2/lazarus-project_4.2.0-0_amd64.deb"
+            fpc-url: |
+              https://sourceforge.net/projects/lazarus/files/Lazarus Linux amd64 DEB/Lazarus 4.2/fpc-laz_3.2.2-210709_amd64.deb
+              https://sourceforge.net/projects/lazarus/files/Lazarus Linux amd64 DEB/Lazarus 4.2/fpc-src_3.2.2-210709_amd64.deb
+
+          - name: win64
+            os: windows-latest
+            widgetset: win32
+            targetos: win64
+            laz-url: "https://sourceforge.net/projects/lazarus/files/Lazarus Windows 64 bits/Lazarus 4.2/lazarus-4.2-fpc-3.2.2-win64.exe"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Development libraries (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libgtk2.0-dev
+
+      - name: Install Lazarus / FPC
+        uses: ollydev/setup-lazarus@v4
+        with:
+          laz-url: ${{ matrix.laz-url }}
+          fpc-url: ${{ matrix.fpc-url }}
+
+      - name: BGRABitmap (pascalscada_hmi dependency)
+        run: |
+          git clone --depth 1 https://github.com/bgrabitmap/bgrabitmap.git ../bgrabitmap
+          lazbuild --add-package-link ../bgrabitmap/bgrabitmap/bgrabitmappack.lpk
+
+      - name: BGRAControls (used by two examples)
+        run: |
+          git clone --depth 1 https://github.com/bgrabitmap/bgracontrols.git ../bgracontrols
+          lazbuild --add-package-link ../bgracontrols/bgracontrols.lpk
+
+      - name: Zeos (used by nine examples)
+        # The zip the Online Package Manager serves, which is the 8.0 release
+        # the examples were written against, and which builds clean with the
+        # FPC 3.2.2 installed above. Not the git mirror: its 8.0-patches branch
+        # has moved past the release and stops on ZCbor.pas ("identifier idents
+        # no member Create") with a 3.2 compiler.
+        # zcomponent alone is not enough either: lazbuild resolves a package's
+        # own dependencies through registered links, and zcomponent pulls
+        # zcore, zdbc, zplain and zparsesql.
+        run: |
+          curl -sSL -o ZeosDBO.zip https://packages.lazarus-ide.org/ZeosDBO.zip
+          if command -v unzip >/dev/null; then
+            unzip -q ZeosDBO.zip -d ..
+          else
+            7z x -o.. ZeosDBO.zip >/dev/null
+          fi
+          rm -f ZeosDBO.zip
+          for pkg in ../zeosdbo/packages/lazarus/*.lpk; do
+            lazbuild --add-package-link "$pkg"
+          done
+
+      - name: Build the examples
+        # The sweep finds the Lazarus directory on its own and registers the
+        # packages shipped with it (TAChart, RTTIControls, SQLdb). Missing
+        # third party ones (Zeos, industrial) come out as skipped, not as a
+        # failure.
+        run: tests/build_examples.sh ${{ matrix.widgetset }} ${{ matrix.targetos }}
+
+  # ---------------------------------------------------------------
+  # Linux 32: there is no i386 runner, but an i386 container runs
+  # natively on the runner's x86_64 kernel (no emulation).
+  # Only the non-graphical core here, which is where 32 bits matters.
+  # ---------------------------------------------------------------
+  linux32:
+    name: linux32
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and test inside an i386 container
+        run: |
+          docker run --rm --platform linux/386 \
+            -v "$PWD":/src -w /src \
+            i386/debian:bookworm \
+            bash -euxc '
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update -qq
+              apt-get install -y -qq lazarus lcl-nogui
+
+              lazbuild --add-package-link pascalscada_common.lpk
+              lazbuild --add-package-link pascalscada.lpk
+              lazbuild --add-package-link pascalscada_db.lpk
+
+              lazbuild --build-all --widgetset=nogui pascalscada_common.lpk
+              lazbuild --build-all --widgetset=nogui pascalscada.lpk
+              lazbuild --build-all --widgetset=nogui tests/pascalscada_tests.lpi
+
+              tests/bin/pascalscada_tests --all --format=plain
+              tests/bin/pascalscada_tests --all --format=xml --file=tests/results-linux32.xml
+            '
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results-linux32
+          path: tests/results-*.xml
+
+  # ---------------------------------------------------------------
+  # Linux ARM 64 (aarch64): GitHub's native ARM runner, no emulation.
+  # The ubuntu-24.04-arm label is free on a public repository; on a
+  # private one it depends on the plan (Team/Enterprise). If it is not
+  # available, swap it for ubuntu-latest plus the QEMU recipe used by
+  # the linux-armhf job, with --platform linux/arm64.
+  # Same coverage as linux32: non-graphical core + suite.
+  # ---------------------------------------------------------------
+  linux-aarch64:
+    name: linux-aarch64
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the distribution's Lazarus/FPC
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lazarus lcl-nogui
+
+      - name: Build the core and the suite
+        run: |
+          lazbuild --add-package-link pascalscada_common.lpk
+          lazbuild --add-package-link pascalscada.lpk
+          lazbuild --add-package-link pascalscada_db.lpk
+
+          lazbuild --build-all --widgetset=nogui pascalscada_common.lpk
+          lazbuild --build-all --widgetset=nogui pascalscada.lpk
+          lazbuild --build-all --widgetset=nogui tests/pascalscada_tests.lpi
+
+      - name: Run the tests
+        run: |
+          tests/bin/pascalscada_tests --all --format=plain
+          tests/bin/pascalscada_tests --all --format=xml --file=tests/results-linux-aarch64.xml
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results-linux-aarch64
+          path: tests/results-*.xml
+
+  # ---------------------------------------------------------------
+  # Linux ARM 32 (armhf): there is no ARM 32 runner and GitHub's ARM 64
+  # runners do not execute AArch32 code, so this is an armhf container
+  # over QEMU. It is the slowest job in the matrix.
+  # ---------------------------------------------------------------
+  linux-armhf:
+    name: linux-armhf
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable ARM 32 emulation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm
+
+      - name: Build and test inside an armhf container
+        run: |
+          docker run --rm --platform linux/arm/v7 \
+            -v "$PWD":/src -w /src \
+            arm32v7/debian:bookworm \
+            bash -euxc '
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update -qq
+              apt-get install -y -qq lazarus lcl-nogui
+
+              lazbuild --add-package-link pascalscada_common.lpk
+              lazbuild --add-package-link pascalscada.lpk
+              lazbuild --add-package-link pascalscada_db.lpk
+
+              lazbuild --build-all --widgetset=nogui pascalscada_common.lpk
+              lazbuild --build-all --widgetset=nogui pascalscada.lpk
+              lazbuild --build-all --widgetset=nogui tests/pascalscada_tests.lpi
+
+              tests/bin/pascalscada_tests --all --format=plain
+              tests/bin/pascalscada_tests --all --format=xml --file=tests/results-linux-armhf.xml
+            '
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results-linux-armhf
+          path: tests/results-*.xml
+
+  # ---------------------------------------------------------------
+  # FreeBSD 64: a full VM inside the Ubuntu runner.
+  # Uses lazbuild rather than plain fpc: the driver tests go through
+  # plcstring, which depends on LazUTF8 (LazUtils), so Lazarus has to be
+  # installed either way. The package is not called "lazarus" - it only
+  # exists with the flavor in the name, and gtk2 is the port's default
+  # (none of which is used here: we build with --widgetset=nogui).
+  #
+  # If one day the package's graphical dependencies get too heavy, going
+  # back to plain fpc means adding the LazUtils units by hand:
+  #   fpc ... -Fu<lazarus>/components/lazutils -Fi<lazarus>/components/lazutils
+  # ---------------------------------------------------------------
+  freebsd64:
+    name: freebsd64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and test on FreeBSD
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "14"
+          usesh: true
+          copyback: false
+          prepare: |
+            pkg install -y lazarus-gtk2
+          run: |
+            set -e
+
+            # The packaged lazbuild cannot find on its own where Lazarus
+            # was installed ("Invalid Lazarus directory": it looks for the lcl
+            # directory from a path that only exists in an install made by the
+            # official installer), so it needs --lazarusdir.
+            # We look for lcl.lpk on disk instead of asking the package manager
+            # by name: the registered name depends on the flavor and has
+            # already changed once. The package path is versioned
+            # (lazarus-4.8), and on Lazarus 4.x lcl.lpk lives in
+            # lcl/interfaces/ - not in lcl/. That file is what confirms the
+            # candidate; handing over a path without checking it is what made
+            # lazbuild complain about "directory lcl not found".
+            LAZDIR=""
+            for d in /usr/local/share/lazarus /usr/local/share/lazarus-* \
+                     /usr/local/lib/lazarus /usr/local/lib/lazarus-*; do
+              if [ -f "$d/lcl/interfaces/lcl.lpk" ]; then LAZDIR="$d"; break; fi
+            done
+            if [ -z "$LAZDIR" ]; then
+              for f in $(find /usr/local -type f -name lcl.lpk 2>/dev/null); do
+                d=${f%/lcl/interfaces/lcl.lpk}
+                if [ "$d" != "$f" ] && [ -d "$d/lcl" ]; then LAZDIR="$d"; break; fi
+              done
+            fi
+            if [ -z "$LAZDIR" ]; then
+              echo "could not find the lazarus directory. diagnostics:"
+              pkg info | grep -i laz || echo "(no package with 'laz' in the name)"
+              command -v lazbuild || echo "(lazbuild not in PATH)"
+              ls -d /usr/local/share/lazarus* /usr/local/lib/lazarus* 2>/dev/null || true
+              find /usr/local -type f -name lcl.lpk 2>/dev/null || true
+              exit 1
+            fi
+            echo "lazarus at $LAZDIR (lcl.lpk: $LAZDIR/lcl/interfaces/lcl.lpk)"
+
+            LAZ="lazbuild --lazarusdir=$LAZDIR"
+
+            $LAZ --add-package-link pascalscada_common.lpk
+            $LAZ --add-package-link pascalscada.lpk
+            $LAZ --add-package-link pascalscada_db.lpk
+
+            $LAZ --build-all --widgetset=nogui pascalscada_common.lpk
+            $LAZ --build-all --widgetset=nogui pascalscada.lpk
+            $LAZ --build-all --widgetset=nogui tests/pascalscada_tests.lpi
+
+            tests/bin/pascalscada_tests --all --format=plain
